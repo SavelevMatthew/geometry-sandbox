@@ -24,7 +24,7 @@ class Application(QMainWindow):
         self.show()
         self.setFocus()
 
-        self.cam = Cam((-50, 0, 0), (0, pi / 2))
+        self.cam = Cam((0, 50, 0))
         self.engine = Engine(self.cam)
         self.pointer = Pointer()
 
@@ -156,13 +156,13 @@ class Canvas(QWidget):
                 y -= self.cam.pos[1]
                 z -= self.cam.pos[2]
 
-                x, z = Engine.rotate2d((x, z), self.cam.rot[1])
-                y, z = Engine.rotate2d((y, z), self.cam.rot[0])
-                f = 300 / z
-                x, y = x * f, y * f
-                points += [(self.cx + int(x), self.cy + int(y))]
+                x, y = Engine.rotate2d((x, y), -self.cam.rot[1])
+                z, y = Engine.rotate2d((z, y), self.cam.rot[0])
+                f = 300 / y
+                x, y = x * f, z * f
+                points += [(self.cx - int(x), self.cy + int(y))]
                 self.painter.setPen(self.verts_brush)
-                self.painter.drawPoint(self.cx + int(x), self.cy + int(y))
+                self.painter.drawPoint(self.cx - int(x), self.cy + int(y))
 
             self.painter.setPen(self.border_brush)
             self.painter.drawLine(points[0][0], points[0][1],

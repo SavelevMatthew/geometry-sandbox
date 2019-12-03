@@ -13,20 +13,20 @@ class Cam:
 
         if keys['W']:
             self.pos[0] += x
-            self.pos[2] += y
+            self.pos[1] -= y
         if keys['S']:
             self.pos[0] -= x
-            self.pos[2] -= y
+            self.pos[1] += y
         if keys['A']:
             self.pos[0] -= y
-            self.pos[2] += x
+            self.pos[1] -= x
         if keys['D']:
             self.pos[0] += y
-            self.pos[2] -= x
+            self.pos[1] += x
         if keys['SPACE']:
-            self.pos[1] -= s
+            self.pos[2] += s
         if keys['SHIFT']:
-            self.pos[1] += s
+            self.pos[2] -= s
 
     def update_rotation(self, dx, dy):
         dx = dx * self.sensitivity / 100000
