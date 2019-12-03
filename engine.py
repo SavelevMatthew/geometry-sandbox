@@ -4,9 +4,9 @@ import math
 
 
 class Engine():
-    def __init__(self):
+    def __init__(self, cam):
         self.figures = {}
-        self.cam = camera.Cam((0, 0, -50))
+        self.cam = cam
 
     def add_object(self, obj):
         self.figures[obj.name] = obj

@@ -5,6 +5,8 @@ from PyQt5.QtCore import Qt, QBasicTimer
 from PyQt5.QtGui import QPainter, QPen, QFont
 import figures
 from engine import Engine
+from math import pi
+from camera import Cam
 
 
 class Application(QMainWindow):
@@ -22,8 +24,9 @@ class Application(QMainWindow):
         self.show()
         self.setFocus()
 
-        self.engine = Engine()
-        self.cam = self.engine.cam
+        self.cam = Cam((-50, 0, 0), (0, pi / 2))
+        self.engine = Engine(self.cam)
+        self.pointer = Pointer()
 
         self.canvas = Canvas(self, w * 0.75, h, 0, 0, 'rgba(100,100,100,100%)',
                              self.engine)
@@ -75,7 +78,9 @@ class Application(QMainWindow):
             self.keyboard['SHIFT'] = False
 
     def timerEvent(self, event):
-        self.cam.update(self.dt, self.keyboard)
+        dx, dy = self.pointer.get_movement()
+        self.cam.update_rotation(dx, dy)
+        self.cam.update_position(self.dt, self.keyboard)
         self.canvas.repaint()
 
     def add_object(self, obj):
@@ -102,11 +107,13 @@ class Canvas(QWidget):
         self.cam = engine.cam
         self.cx, self.cy = w // 2, h // 2
         self.pos = (offset_x, offset_y)
+        self.mouse_pressed = False
 
         self.setFixedSize(w, h)
         self.setParent(parent)
         self.setStyleSheet('background-color: {}'.format(bg))
         self.move(offset_x, offset_y)
+        self.setMouseTracking(True)
         self.show()
 
         self.border_brush = QPen(Qt.black, int(w / 200), Qt.SolidLine)
@@ -119,6 +126,16 @@ class Canvas(QWidget):
         self.parent.move_window.hide()
         self.parent.scale_window.hide()
         self.parent.rotate_window.hide()
+        if event.button() == Qt.LeftButton:
+            self.mouse_pressed = True
+            self.parent.pointer.click(event.x(), event.y())
+
+    def mouseReleaseEvent(self, event):
+        self.mouse_pressed = False
+
+    def mouseMoveEvent(self, event):
+        if self.mouse_pressed:
+            self.parent.pointer.update_position(event.x(), event.y())
 
     def paintEvent(self, event):
         self.painter = QPainter(self)
@@ -316,7 +333,7 @@ class ListObject(QListWidgetItem):
     def __init__(self, name, parent):
         super().__init__(parent)
         self.name = name
-        
+
         self.setText(name)
         self.setTextAlignment(Qt.AlignCenter)
 
@@ -482,3 +499,26 @@ class RotateWindow(ModifyWindow):
     def rotate_object(self):
         self.clear_values()
         self.hide()
+
+
+class Pointer():
+    def __init__(self):
+        self.x = 0
+        self.y = 0
+        self.x_onclick = 0
+        self.y_onclick = 0
+
+    def get_movement(self):
+        dx = self.x - self.x_onclick
+        dy = self.y - self.y_onclick
+        self.x_onclick = self.x
+        self.y_onclick = self.y
+        return dx, dy
+
+    def click(self, x, y):
+        self.x = self.x_onclick = x
+        self.y = self.y_onclick = y
+
+    def update_position(self, new_x, new_y):
+        self.x = new_x
+        self.y = new_y
