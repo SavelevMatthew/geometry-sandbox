@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QListWidget, QLabel,
                              QPushButton, QListWidgetItem, QFrame, QGridLayout,
-                             QInputDialog, QMessageBox)
+                             QInputDialog, QMessageBox, QAbstractItemView)
 from PyQt5.QtCore import Qt, QBasicTimer
 from PyQt5.QtGui import QPainter, QPen, QFont
 import figures
@@ -34,11 +34,11 @@ class Application(QMainWindow):
                                        self, 'rgba(50,50,50,100%)',
                                        self.avaliable)
         self.move_window = MoveWindow(self, w / 3, h / 3, 'Move object',
-                                      -10000, 10000, 2)
-        self.scale_window = MoveWindow(self, w / 3, h / 3, 'Scale object',
-                                       -10000, 10000, 2)
-        self.rotate_window = MoveWindow(self, w / 3, h / 3, 'Rotate object',
-                                        -10000, 10000, 2)
+                                      -10000, 10000, 2, 0.0)
+        self.scale_window = ScaleWindow(self, w / 3, h / 3, 'Scale object',
+                                        0.01, 10, 2, 1.0)
+        self.rotate_window = RotateWindow(self, w / 3, h / 3, 'Rotate object',
+                                          0, 360, 2, 0.0)
         self.objects = SideBar(self, w * 0.25, h, w * 0.75, 0,
                                'rgba(50,50,50,100%)')
 
@@ -49,18 +49,19 @@ class Application(QMainWindow):
 
     def keyPressEvent(self, event):
         key = event.key()
-        if key == Qt.Key_A:
-            self.keyboard['A'] = True
-        elif key == Qt.Key_D:
-            self.keyboard['D'] = True
-        elif key == Qt.Key_W:
-            self.keyboard['W'] = True
-        elif key == Qt.Key_S:
-            self.keyboard['S'] = True
-        elif key == Qt.Key_Space:
-            self.keyboard['SPACE'] = True
-        elif key == Qt.Key_Shift:
-            self.keyboard['SHIFT'] = True
+        if self.canvas.hasFocus():
+            if key == Qt.Key_A:
+                self.keyboard['A'] = True
+            elif key == Qt.Key_D:
+                self.keyboard['D'] = True
+            elif key == Qt.Key_W:
+                self.keyboard['W'] = True
+            elif key == Qt.Key_S:
+                self.keyboard['S'] = True
+            elif key == Qt.Key_Space:
+                self.keyboard['SPACE'] = True
+            elif key == Qt.Key_Shift:
+                self.keyboard['SHIFT'] = True
 
     def keyReleaseEvent(self, event):
         key = event.key()
@@ -87,6 +88,7 @@ class Application(QMainWindow):
         self.engine.add_object(obj)
         list_object = ListObject(obj.name, self.objects.list)
         self.objects.list.addItem(list_object)
+        self.objects.list.clearSelection()
         self.objects.list.setCurrentItem(list_object)
 
     def delete_object(self, name):
@@ -121,7 +123,7 @@ class Canvas(QWidget):
         self.faces_brush = QPen(Qt.red, int(w / 300), Qt.SolidLine)
 
     def mousePressEvent(self, event):
-        self.parent.setFocus()
+        self.setFocus()
         self.parent.selector.hide()
         self.parent.move_window.hide()
         self.parent.scale_window.hide()
@@ -266,25 +268,32 @@ class SideBar(QWidget):
         self.sc.show()
 
     def check_for_objects(self):
-        if self.parent.objects.list.count() == 0:
+        if len(self.parent.objects.list.selectedItems()) == 0:
             self.parent.scale_window.hide()
             self.parent.move_window.hide()
             self.parent.rotate_window.hide()
 
     def delete_object(self):
-        if self.parent.objects.list.count() == 0:
+        items = self.parent.objects.list.selectedItems()
+        if len(items) == 0:
             return
-        name = self.parent.objects.list.currentItem().text()
-        formatted_msg = 'Are you sure about deleting {}?'.format(name)
+        names = ''
+        for item in items:
+            names += item.text() + ', '
+        names = names[:-2:]
+        print(names)
+        formatted_msg = 'Are you sure about deleting {}?'.format(names)
         msg = QMessageBox()
         msg.setWindowTitle('Deleting object!')
-        msg.setText('You\'re trying to delete current object.')
+        msg.setText('You\'re trying to delete object.' +
+                    ' This operation can\'t be cancelled!')
         msg.setInformativeText(formatted_msg)
         msg.setIcon(QMessageBox.Critical)
         msg.setStandardButtons(QMessageBox.Cancel | QMessageBox.Ok)
         res = msg.exec_()
         if res == QMessageBox.Ok:
-            self.parent.delete_object(name)
+            for item in items:
+                self.parent.delete_object(item.text())
 
 
 class ObjList(QListWidget):
@@ -298,6 +307,7 @@ class ObjList(QListWidget):
         self.setFixedSize(w, h)
         self.setParent(parent)
         self.move(offset_x, offset_y)
+        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.show()
 
         self.itemDoubleClicked.connect(self.rename_item)
@@ -383,14 +393,15 @@ class ObjectSelector(QWidget):
 
 
 class ModifyWindow(QWidget):
-    def __init__(self, app, w, h, caption, min, max, uncertainty):
+    def __init__(self, app, w, h, caption, min, max, uncertainty, default):
         super().__init__()
         self.w = w
         self.h = h
         self.cap = caption
-        self.x = 0.0
-        self.y = 0.0
-        self.z = 0.0
+        self.x = default
+        self.y = default
+        self.z = default
+        self.default = default
         self.min = min
         self.max = max
         self.uncertainty = uncertainty
@@ -402,11 +413,11 @@ class ModifyWindow(QWidget):
         label1 = QLabel('X: ')
         label2 = QLabel('Y: ')
         label3 = QLabel('Z: ')
-        self.x_label = QLabel('0.00')
+        self.x_label = QLabel(str(default))
         self.x_label.setFrameStyle(QFrame.Panel | QFrame.Sunken)
-        self.y_label = QLabel('0.00')
+        self.y_label = QLabel(str(default))
         self.y_label.setFrameStyle(QFrame.Panel | QFrame.Sunken)
-        self.z_label = QLabel('0.00')
+        self.z_label = QLabel(str(default))
         self.z_label.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.x_button = QPushButton('Change')
         self.x_button.clicked.connect(self.set_x)
@@ -435,7 +446,7 @@ class ModifyWindow(QWidget):
 
     def set_x(self):
         double, ok = QInputDialog.getDouble(self, 'Change value',
-                                            'Enter new value: ', self.x,
+                                            'Enter new value: ', self.default,
                                             self.min, self.max,
                                             self.uncertainty)
         if ok:
@@ -461,42 +472,52 @@ class ModifyWindow(QWidget):
             self.z = double
 
     def clear_values(self):
-        self.x = 0.0
-        self.y = 0.0
-        self.z = 0.0
+        self.x = self.default
+        self.y = self.default
+        self.z = self.default
         self.x_label.setText(str(self.x))
         self.y_label.setText(str(self.y))
         self.z_label.setText(str(self.z))
 
 
 class MoveWindow(ModifyWindow):
-    def __init__(self, app, w, h, caption, min, max, uncertainty):
-        super().__init__(app, w, h, caption, min, max, uncertainty)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.ok_button.clicked.connect(self.move_object)
 
     def move_object(self):
-        name = self.app.objects.list.currentItem().text()
-        self.app.engine.figures[name].move(self.x, self.y, self.z)
+        items = self.app.objects.list.selectedItems()
+        for item in items:
+            name = item.text()
+            self.app.engine.figures[name].move(self.x, self.y, self.z)
         self.clear_values()
         self.hide()
 
 
 class ScaleWindow(ModifyWindow):
-    def __init__(self, app, w, h, caption, min, max, uncertainty):
-        super().__init__(app, w, h, caption, min, max, uncertainty)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.ok_button.clicked.connect(self.scacle_object)
 
     def scacle_object(self):
+        items = self.app.objects.list.selectedItems()
+        for item in items:
+            name = item.text()
+            self.app.engine.figures[name].scale(self.x, self.y, self.z)
         self.clear_values()
         self.hide()
 
 
 class RotateWindow(ModifyWindow):
-    def __init__(self, app, w, h, caption, min, max, uncertainty):
-        super().__init__(app, w, h, caption, min, max, uncertainty)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.ok_button.clicked.connect(self.rotate_object)
 
     def rotate_object(self):
+        items = self.app.objects.list.selectedItems()
+        for item in items:
+            name = item.text()
+            self.app.engine.figures[name].rotate(self.x, self.y, self.z)
         self.clear_values()
         self.hide()
 
