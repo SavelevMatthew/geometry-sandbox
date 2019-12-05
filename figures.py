@@ -72,3 +72,13 @@ class Cube(Figure):
 
     def __init__(self, name):
         super().__init__(name, Cube.vertices, Cube.edges, Cube.faces)
+
+
+class Plane(Figure):
+    vertices = (-10.0, -10.0, 0.0), (10.0, -10.0, 0.0), \
+               (10.0, 10.0, 0.0), (-10.0, 10.0, 0.0)
+    edges = (0, 1), (1, 2), (2, 3), (3, 0)
+    faces = (0, 1, 2, 3),
+
+    def __init__(self, name):
+        super().__init__(name, Plane.vertices, Plane.edges, Plane.faces)

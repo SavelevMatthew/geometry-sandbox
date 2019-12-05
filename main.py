@@ -8,7 +8,7 @@ if __name__ == '__main__':
     os.environ['SDL_VIDEO_CENTERED'] = '1'
     w, h = 1280, 720
     caption = '🧊Geometry SandBox'
-    objects = {'Cube': figures.Cube}
+    objects = {'Cube': figures.Cube, 'Plane': figures.Plane}
 
     app = QApplication(sys.argv)
     window = applogic.Application(caption, w, h, objects)

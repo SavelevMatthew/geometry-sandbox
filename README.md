@@ -2,8 +2,8 @@
 ===============================================================================
 Author: Savelev Matthew
 Current version:
-  - No stable release
-  - Beta 0.1
+  - 1.0-Cuboid
+  - Beta 1.0.a
 ===============================================================================
 # Description:
 Here's Basic 3D Editor written on Pure Python and PyQT5 for elements drawing.

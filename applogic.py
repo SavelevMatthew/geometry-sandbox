@@ -7,6 +7,7 @@ import figures
 from engine import Engine
 from math import pi
 from camera import Cam
+from numpy import vstack, hstack, ones, cross
 
 
 class Application(QMainWindow):
@@ -110,6 +111,8 @@ class Canvas(QWidget):
         self.cx, self.cy = w // 2, h // 2
         self.pos = (offset_x, offset_y)
         self.mouse_pressed = False
+        self.lines = [((0, 0), (0, w)), ((0, w), (w, h)),
+                      ((w, h), (0, h)), ((0, h), (0, 0))]
 
         self.setFixedSize(w, h)
         self.setParent(parent)
@@ -151,7 +154,6 @@ class Canvas(QWidget):
     def draw_figure(self, figure):
         for edge in figure.edges:
             points = []
-
             for x, y, z in (figure.vertices[edge[0]],
                             figure.vertices[edge[1]]):
                 x -= self.cam.pos[0]
@@ -160,15 +162,24 @@ class Canvas(QWidget):
 
                 x, y = Engine.rotate2d((x, y), -self.cam.rot[1])
                 z, y = Engine.rotate2d((z, y), self.cam.rot[0])
-                f = 300 / y
+                if y > -0.01:
+                    y = 0.01
+                f = -300 / abs(y)
                 x, y = x * f, z * f
-                points += [(self.cx - int(x), self.cy + int(y))]
+                points += [(self.cx - x, self.cy + y)]
                 self.painter.setPen(self.verts_brush)
-                self.painter.drawPoint(self.cx - int(x), self.cy + int(y))
+                if self.is_point_inside((self.cx - x, self.cy + y)):
+                    self.painter.drawPoint(self.cx - x, self.cy + y)
 
             self.painter.setPen(self.border_brush)
             self.painter.drawLine(points[0][0], points[0][1],
                                   points[1][0], points[1][1])
+                                  
+    def is_point_inside(self, p):
+        return p[0] >= 0 and p[0] < self.w and p[1] >= 0 and p[1] < self.h
+
+    def get_3d(self):
+        pass
 
 
 class SideBar(QWidget):
