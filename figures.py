@@ -60,19 +60,6 @@ class Figure():
         self.vertices = tuple(new_verts)
 
 
-class Cube(Figure):
-    vertices = (-10.0, -10.0, -10.0), (10.0, -10.0, -10.0), \
-               (10.0, 10.0, -10.0), (-10.0, 10.0, -10.0), \
-               (-10.0, -10.0, 10.0), (10.0, -10.0, 10.0), \
-               (10.0, 10.0, 10.0), (-10.0, 10.0, 10.0)
-    edges = (0, 1), (1, 2), (2, 3), (3, 0), \
-            (4, 5), (5, 6), (6, 7), (7, 4), \
-            (0, 4), (1, 5), (2, 6), (3, 7)
-
-    def __init__(self, name):
-        super().__init__(name, Cube.vertices, Cube.edges)
-
-
 class Plane(Figure):
     precise_depend = True
 
@@ -95,7 +82,7 @@ class Plane(Figure):
         super().__init__(name, tuple(verts), tuple(edges))
 
 
-class Circle(Figure):
+class Ball(Figure):
     precise_depend = True
 
     def __init__(self, name, precision):
@@ -134,3 +121,61 @@ class Circle(Figure):
             start += j * precision * 2
 
         super().__init__(name, tuple(verts), tuple(edges))
+
+
+class Cone(Plane):
+    precise_depend = True
+
+    def __init__(self, name, precision):
+        super().__init__(name, precision)
+        verts = list(self.vertices)
+        verts.append((0, 0, 20))
+        self.vertices = tuple(verts)
+        edges = list(self.edges)
+        amount = len(edges)
+        for i in range(amount):
+            edges.append((i, amount))
+        self.edges = tuple(edges)
+
+
+class Pyramid(Cone):
+    precise_depend = False
+
+    def __init__(self, name):
+        super().__init__(name, 4)
+
+
+class Tetrahedron(Cone):
+    precise_depend = False
+
+    def __init__(self, name):
+        super().__init__(name, 3)
+
+
+class Cylinder(Plane):
+    precise_depend = True
+
+    def __init__(self, name, precision):
+        super().__init__(name, precision)
+        self.move(0, 0, -10)
+        self.center = (0, 0, 0)
+        circle = Plane('TEMP', precision)
+        circle.move(0, 0, 10)
+        verts = list(self.vertices)
+        edges = list(self.edges)
+        amount = len(self.vertices)
+        for i in range(amount):
+            verts.append(circle.vertices[i])
+            edges.append((i, i + amount))
+            edges.append((circle.edges[i][0] + amount,
+                          circle.edges[i][1] + amount))
+
+        self.vertices = tuple(verts)
+        self.edges = tuple(edges)
+
+
+class Cube(Cylinder):
+    precise_depend = False
+
+    def __init__(self, name):
+        super().__init__(name, 4)

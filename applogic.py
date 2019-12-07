@@ -290,7 +290,6 @@ class SideBar(QWidget):
         for item in items:
             names += item.text() + ', '
         names = names[:-2:]
-        print(names)
         formatted_msg = 'Are you sure about deleting {}?'.format(names)
         msg = QMessageBox()
         msg.setWindowTitle('Deleting object!')

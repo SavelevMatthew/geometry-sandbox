@@ -9,7 +9,9 @@ if __name__ == '__main__':
     w, h = 1280, 720
     caption = '🧊Geometry SandBox'
     objects = {'Cube': figures.Cube, 'Plane': figures.Plane,
-               'Circle': figures.Circle}
+               'Ball': figures.Ball, 'Cone': figures.Cone,
+               'Pyramid': figures.Pyramid, 'Tetrahedron': figures.Tetrahedron,
+               'Cylinder': figures.Cylinder}
 
     app = QApplication(sys.argv)
     window = applogic.Application(caption, w, h, objects, 25)
