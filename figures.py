@@ -3,6 +3,8 @@ from numpy import dot, matrix
 
 
 class Figure():
+    precise_depend = False
+
     def __init__(self, name, verts, edges, faces, center=(0, 0, 0)):
         self.name = name
         self.vertices = verts
@@ -75,10 +77,26 @@ class Cube(Figure):
 
 
 class Plane(Figure):
-    vertices = (-10.0, -10.0, 0.0), (10.0, -10.0, 0.0), \
-               (10.0, 10.0, 0.0), (-10.0, 10.0, 0.0)
-    edges = (0, 1), (1, 2), (2, 3), (3, 0)
-    faces = (0, 1, 2, 3),
+    precise_depend = True
 
-    def __init__(self, name):
-        super().__init__(name, Plane.vertices, Plane.edges, Plane.faces)
+    def __init__(self, name, precision):
+        r = 10 * (2**(0.5))
+        step = 2 * pi / precision
+        angle = 0.0
+        verts = []
+        faces = []
+        edges = []
+        prev = None
+        for i in range(precision):
+            x, y = r * cos(angle + step / 2 + pi / 2), \
+                   r * sin(angle + step / 2 + pi / 2)
+            verts.append((x, y, 0))
+            angle += step
+            faces.append(i)
+            if prev is not None:
+                edges.append((prev, i))
+            prev = i
+        edges.append((edges[len(edges) - 1][1], 0))
+
+        super().__init__(name, tuple(verts), tuple(edges),
+                         tuple([tuple(faces)]))

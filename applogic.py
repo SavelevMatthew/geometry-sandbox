@@ -174,12 +174,9 @@ class Canvas(QWidget):
             self.painter.setPen(self.border_brush)
             self.painter.drawLine(points[0][0], points[0][1],
                                   points[1][0], points[1][1])
-                                  
+
     def is_point_inside(self, p):
         return p[0] >= 0 and p[0] < self.w and p[1] >= 0 and p[1] < self.h
-
-    def get_3d(self):
-        pass
 
 
 class SideBar(QWidget):
@@ -398,9 +395,17 @@ class ObjectSelector(QWidget):
 
     def add_object(self):
         name = self.list.currentItem().text()
-        figure_name = self.app.engine.generate_name(name)
-        figure = self.objects[name](figure_name)
-        self.app.add_object(figure)
+        if self.objects[name].precise_depend:
+            precision, ok = QInputDialog.getInt(self, 'Input precision',
+                                                'Enter value: ', 4, 3, 10, 1)
+            if ok:
+                figure_name = self.app.engine.generate_name(name)
+                figure = self.objects[name](figure_name, precision)
+                self.app.add_object(figure)
+        else:
+            figure_name = self.app.engine.generate_name(name)
+            figure = self.objects[name](figure_name)
+            self.app.add_object(figure)
 
 
 class ModifyWindow(QWidget):
