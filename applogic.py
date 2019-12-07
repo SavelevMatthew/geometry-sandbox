@@ -11,7 +11,7 @@ from numpy import vstack, hstack, ones, cross
 
 
 class Application(QMainWindow):
-    def __init__(self, caption, w, h, available_objects):
+    def __init__(self, caption, w, h, available_objects, precision):
         super().__init__()
         self.caption = caption
         self.w = w
@@ -19,6 +19,7 @@ class Application(QMainWindow):
         self.keyboard = {'A': False, 'D': False, 'W': False, 'S': False,
                          'SHIFT': False, 'SPACE': False}
         self.avaliable = available_objects
+        self.precision = precision
 
         self.setFixedSize(w, h)
         self.setWindowTitle(caption)
@@ -397,7 +398,8 @@ class ObjectSelector(QWidget):
         name = self.list.currentItem().text()
         if self.objects[name].precise_depend:
             precision, ok = QInputDialog.getInt(self, 'Input precision',
-                                                'Enter value: ', 4, 3, 10, 1)
+                                                'Enter value: ', 4, 3,
+                                                self.app.precision, 1)
             if ok:
                 figure_name = self.app.engine.generate_name(name)
                 figure = self.objects[name](figure_name, precision)

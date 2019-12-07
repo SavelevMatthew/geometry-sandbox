@@ -5,12 +5,11 @@ from numpy import dot, matrix
 class Figure():
     precise_depend = False
 
-    def __init__(self, name, verts, edges, faces, center=(0, 0, 0)):
+    def __init__(self, name, verts, edges, center=(0, 0, 0)):
         self.name = name
         self.vertices = verts
         self.edges = edges
         self.center = center
-        self.faces = faces
 
     def move(self, dx, dy, dz):
         new_verts = []
@@ -69,11 +68,9 @@ class Cube(Figure):
     edges = (0, 1), (1, 2), (2, 3), (3, 0), \
             (4, 5), (5, 6), (6, 7), (7, 4), \
             (0, 4), (1, 5), (2, 6), (3, 7)
-    faces = (0, 1, 2, 3), (4, 5, 6, 7), (0, 1, 5, 4), \
-            (2, 3, 7, 6), (0, 3, 7, 4), (1, 2, 6, 5)
 
     def __init__(self, name):
-        super().__init__(name, Cube.vertices, Cube.edges, Cube.faces)
+        super().__init__(name, Cube.vertices, Cube.edges)
 
 
 class Plane(Figure):
@@ -82,21 +79,58 @@ class Plane(Figure):
     def __init__(self, name, precision):
         r = 10 * (2**(0.5))
         step = 2 * pi / precision
-        angle = 0.0
+        angle = (step + pi) / 2
         verts = []
-        faces = []
         edges = []
         prev = None
         for i in range(precision):
-            x, y = r * cos(angle + step / 2 + pi / 2), \
-                   r * sin(angle + step / 2 + pi / 2)
+            x, y = r * cos(angle), r * sin(angle)
             verts.append((x, y, 0))
             angle += step
-            faces.append(i)
             if prev is not None:
                 edges.append((prev, i))
             prev = i
         edges.append((edges[len(edges) - 1][1], 0))
 
-        super().__init__(name, tuple(verts), tuple(edges),
-                         tuple([tuple(faces)]))
+        super().__init__(name, tuple(verts), tuple(edges))
+
+
+class Circle(Figure):
+    precise_depend = True
+
+    def __init__(self, name, precision):
+        edges = []
+        verts = []
+
+        r = 10
+        z_step = pi / precision
+        raw_verts = []
+        verts.append((0, 0, r))
+        for layer in range(1, precision):
+            z = cos(z_step * layer) * r
+            layer_r = sin(z_step * layer) * r
+            layer_verts = []
+            step = pi / precision
+            angle = (step + pi) / 2
+            for i in range(precision * 2):
+                x, y = layer_r * cos(angle), layer_r * sin(angle)
+                layer_verts.append((x, y, z))
+                verts.append((x, y, z))
+                angle += step
+            raw_verts.append(layer_verts)
+        verts.append((0, 0, -r))
+
+        counter = 1
+        for j in range(1, 2 * precision * (precision - 1) + 1):
+            edges.append((max(0, j - 2 * precision), j))
+        for j in range((precision - 2) * 2 * precision + 1,
+                       (precision - 1) * 2 * precision + 1):
+            edges.append((j, (precision - 1) * 2 * precision + 1))
+        for j in range(1, precision):
+            start = 1 + (j - 1) * 2 * precision
+            for i in range(2 * precision - 1):
+                edges.append((start + i, start + i + 1))
+            edges.append((start, start + 2 * precision - 1))
+            start += j * precision * 2
+
+        super().__init__(name, tuple(verts), tuple(edges))
