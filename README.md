@@ -2,13 +2,19 @@
 ===============================================================================
 Author: Savelev Matthew
 Current version:
-  - 1.0-Cuboid
-  - Beta 1.0.a
+  - 2.0-THE_BUN
+  - Beta 2.0.a
 ===============================================================================
 # Description:
 Here's Basic 3D Editor written on Pure Python and PyQT5 for elements drawing.
 You can do basic manipulations with any of this basic structures:
   - Cube
+  - Plane
+  - Ball
+  - Cone
+  - Pyramid
+  - Tetrahedron
+  - Cylinder
 ===============================================================================
 # Launch instruction:
 1) Install all requirement packages from 'requirements.txt' file
