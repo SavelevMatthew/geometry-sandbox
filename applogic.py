@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QListWidget, QLabel,
                              QPushButton, QListWidgetItem, QFrame, QGridLayout,
-                             QInputDialog, QMessageBox, QAbstractItemView)
+                             QInputDialog, QMessageBox, QAbstractItemView,
+                             QAction, QMenuBar)
 from PyQt5.QtCore import Qt, QBasicTimer
 from PyQt5.QtGui import QPainter, QPen, QFont
 import figures
@@ -23,8 +24,6 @@ class Application(QMainWindow):
 
         self.setFixedSize(w, h)
         self.setWindowTitle(caption)
-        self.show()
-        self.setFocus()
 
         self.cam = Cam((0, 50, 0))
         self.engine = Engine(self.cam)
@@ -44,10 +43,24 @@ class Application(QMainWindow):
         self.objects = SideBar(self, w * 0.25, h, w * 0.75, 0,
                                'rgba(50,50,50,100%)')
 
+        main_menu = self.menuBar()
+        camera_menu = main_menu.addMenu('Camera')
+
+        reset_camera = QAction('Reset', camera_menu)
+        reset_camera.setStatusTip('Reset camera position and mode')
+        reset_camera.triggered.connect(self.reset_camera)
+        self.switch_camera = QAction('Mode: Free flight', camera_menu)
+        self.switch_camera.setStatusTip('Switching camera mode...')
+        self.switch_camera.triggered.connect(self.switch_camera_mode)
+
+        camera_menu.addAction(self.switch_camera)
+        camera_menu.addAction(reset_camera)
+
         self.timer = QBasicTimer()
         self.frames = 60
         self.dt = int(100 / self.frames)
         self.timer.start(self.dt, self)
+        self.show()
 
     def keyPressEvent(self, event):
         key = event.key()
@@ -100,6 +113,19 @@ class Application(QMainWindow):
             self.objects.list.takeItem(row)
         self.engine.delete_item(name)
 
+    def switch_camera_mode(self):
+        if self.cam.mode == 0:
+            self.cam.mode = 1
+            self.switch_camera.setText('Mode: Centered')
+        else:
+            self.cam.mode = 0
+            self.switch_camera.setText('Mode: Free Flight')
+        self.reset_camera()
+
+    def reset_camera(self):
+        self.cam.pos = [0, 50, 0]
+        self.cam.rot = [0, 0, 0]
+
 
 class Canvas(QWidget):
     def __init__(self, parent, w, h, offset_x, offset_y, bg, engine):
@@ -114,6 +140,7 @@ class Canvas(QWidget):
         self.mouse_pressed = False
         self.lines = [((0, 0), (0, w)), ((0, w), (w, h)),
                       ((w, h), (0, h)), ((0, h), (0, 0))]
+        self.axises = figures.Axises()
 
         self.setFixedSize(w, h)
         self.setParent(parent)
@@ -124,7 +151,6 @@ class Canvas(QWidget):
 
         self.border_brush = QPen(Qt.black, int(w / 200), Qt.SolidLine)
         self.verts_brush = QPen(Qt.black, int(w / 70), Qt.SolidLine)
-        self.faces_brush = QPen(Qt.red, int(w / 300), Qt.SolidLine)
 
     def mousePressEvent(self, event):
         self.setFocus()
@@ -145,6 +171,7 @@ class Canvas(QWidget):
 
     def paintEvent(self, event):
         self.painter = QPainter(self)
+        self.draw_axis(self.w / 10)
 
         for i in self.engine.figures:
             figure = self.engine.figures[i]
@@ -157,12 +184,20 @@ class Canvas(QWidget):
             points = []
             for x, y, z in (figure.vertices[edge[0]],
                             figure.vertices[edge[1]]):
-                x -= self.cam.pos[0]
-                y -= self.cam.pos[1]
-                z -= self.cam.pos[2]
+                if self.cam.mode == 0:
+                    x -= self.cam.pos[0]
+                    y -= self.cam.pos[1]
+                    z -= self.cam.pos[2]
 
-                x, y = Engine.rotate2d((x, y), -self.cam.rot[1])
-                z, y = Engine.rotate2d((z, y), self.cam.rot[0])
+                    x, y = Engine.rotate2d((x, y), -self.cam.rot[1])
+                    z, y = Engine.rotate2d((z, y), self.cam.rot[0])
+                else:
+                    x, y, z = Engine.rotate_vert((x, y, z), self.cam.rot[0], 0,
+                                                 self.cam.rot[1])
+                    x -= self.cam.pos[0]
+                    y -= self.cam.pos[1]
+                    z -= self.cam.pos[2]
+
                 if y > -0.01:
                     y = 0.01
                 f = -300 / abs(y)
