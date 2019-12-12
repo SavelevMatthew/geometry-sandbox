@@ -14,5 +14,5 @@ if __name__ == '__main__':
                'Cylinder': figures.Cylinder}
 
     app = QApplication(sys.argv)
-    window = applogic.Application(caption, w, h, objects, 25)
+    window = applogic.Application(caption, w, h, objects, 20)
     sys.exit(app.exec_())

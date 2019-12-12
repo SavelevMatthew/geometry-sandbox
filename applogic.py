@@ -140,7 +140,6 @@ class Canvas(QWidget):
         self.mouse_pressed = False
         self.lines = [((0, 0), (0, w)), ((0, w), (w, h)),
                       ((w, h), (0, h)), ((0, h), (0, 0))]
-        self.axises = figures.Axises()
 
         self.setFixedSize(w, h)
         self.setParent(parent)
@@ -171,7 +170,6 @@ class Canvas(QWidget):
 
     def paintEvent(self, event):
         self.painter = QPainter(self)
-        self.draw_axis(self.w / 10)
 
         for i in self.engine.figures:
             figure = self.engine.figures[i]

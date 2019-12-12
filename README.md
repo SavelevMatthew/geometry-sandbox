@@ -3,7 +3,7 @@
 Author: Savelev Matthew
 Current version:
   - 2.0-THE_BUN
-  - Beta 2.0.a
+  - Beta 2.1.b
 ===============================================================================
 # Description:
 Here's Basic 3D Editor written on Pure Python and PyQT5 for elements drawing.
