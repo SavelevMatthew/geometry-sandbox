@@ -16,7 +16,7 @@ You can do basic manipulations with any of this basic structures:
 [Installation](#installation)\
 [Launching](#launching)\
 [HowToUseGuide](#howtouse-short-guide)\
-[Current Status](#current-status)
+[Current Status](#current-status)\
 [Author](#author)
 
 ## General Info
