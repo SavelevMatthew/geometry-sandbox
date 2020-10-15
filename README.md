@@ -17,6 +17,7 @@ You can do basic manipulations with any of this basic structures:
 [Launching](#launching)\
 [HowToUseGuide](#howtouse-short-guide)\
 [Current Status](#current-status)
+[Author](#author)
 
 ## General Info
 
